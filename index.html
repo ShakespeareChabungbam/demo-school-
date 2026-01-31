@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMO SCHOOL | The Future of Learning</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@200;300;400;600;800&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            gold: '#D4AF37',
+                            dark: '#050505'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        #canvas-container {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            width: 100%;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+            object-fit: cover;
+        }
+
+        /* Gradient Overlay for Contrast */
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            /* Radial gradient to darken the center where the text is */
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.8) 90%);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        #scroll-trigger {
+            height: 350vh;
+            /* Reduced for mobile */
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            #scroll-trigger {
+                height: 450vh;
+            }
+        }
+
+        #overlay-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+            width: 100%;
+            mix-blend-mode: normal;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Loader Animation */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050505;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 1.2s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Menu Overlay Transition */
+        #menu-overlay {
+            clip-path: circle(0% at calc(100% - 3rem) 3rem);
+            transition: clip-path 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        #menu-overlay.open {
+            clip-path: circle(150% at calc(100% - 3rem) 3rem);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased selection:bg-white selection:text-black">
+
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="loader-ring mb-8"></div>
+        <div class="text-center">
+            <h2 class="text-2xl font-serif italic text-white/80 mb-2">Demo School</h2>
+            <p class="text-xs text-white/40 tracking-[0.3em] font-sans uppercase" id="loader-text">Loading Assets 0%</p>
+        </div>
+    </div>
+
+    <!-- Navigation Menu Button -->
+    <button id="menu-btn"
+        class="fixed top-6 right-6 z-[60] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex flex-col justify-center items-center gap-1.5 hover:bg-white/20 transition-all duration-300 hover:scale-105 group">
+        <span class="w-6 h-[1px] bg-white group-hover:w-4 transition-all duration-300 origin-right"></span>
+        <span class="w-6 h-[1px] bg-white"></span>
+        <span class="w-6 h-[1px] bg-white group-hover:w-4 transition-all duration-300 origin-right"></span>
+    </button>
+
+    <!-- Navigation Overlay -->
+    <div id="menu-overlay"
+        class="fixed inset-0 z-50 bg-[#050505]/95 backdrop-blur-2xl flex items-center justify-center pointer-events-none data-[state=open]:pointer-events-auto">
+        <nav class="text-center space-y-8">
+            <a href="#"
+                class="block text-4xl md:text-6xl font-serif italic text-white/50 hover:text-white transition-colors hover:scale-105 duration-300"
+                onclick="toggleMenu()">Home</a>
+            <a href="#about"
+                class="block text-4xl md:text-6xl font-serif italic text-white/50 hover:text-white transition-colors hover:scale-105 duration-300"
+                onclick="toggleMenu()">About</a>
+            <a href="#academics"
+                class="block text-4xl md:text-6xl font-serif italic text-white/50 hover:text-white transition-colors hover:scale-105 duration-300"
+                onclick="toggleMenu()">Academics</a>
+            <a href="#contact"
+                class="block text-4xl md:text-6xl font-serif italic text-white/50 hover:text-white transition-colors hover:scale-105 duration-300"
+                onclick="toggleMenu()">Contact</a>
+        </nav>
+
+        <!-- Decoration -->
+        <div class="absolute bottom-10 text-xs text-white/20 tracking-[0.5em] uppercase font-sans">
+            Demo School Interface v2.0
+        </div>
+    </div>
+
+    <!-- Scroll & Canvas Section -->
+    <div id="scroll-trigger">
+        <div id="canvas-container">
+            <canvas id="hero-canvas"></canvas>
+            <div class="hero-overlay"></div>
+
+            <div id="overlay-text" class="px-4">
+                <p class="fade-in-up text-xl md:text-3xl font-serif italic text-white/80 mb-4 tracking-wider"
+                    style="animation-delay: 0.2s;">
+                    Welcome to the
+                </p>
+                <h1 class="fade-in-up text-5xl sm:text-7xl md:text-9xl font-extrabold tracking-tighter mb-4 text-white text-glow"
+                    style="animation-delay: 0.4s;">
+                    FUTURE OF <br /><span class="text-white/90">LEARNING</span>
+                </h1>
+                <div class="fade-in-up mt-8 w-24 h-[1px] bg-white/30 mx-auto" style="animation-delay: 0.6s;"></div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div
+                class="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 text-white/30 flex flex-col items-center gap-2 animate-pulse">
+                <span class="text-[10px] tracking-widest uppercase">Scroll to Explore</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="stroke-current">
+                    <path d="M12 5v14M19 12l-7 7-7-7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Sections -->
+    <main class="relative z-20 bg-[#050505]">
+
+        <!-- About Us -->
+        <section id="about"
+            class="min-h-screen flex items-center justify-center px-6 py-32 border-t border-white/5 relative overflow-hidden">
+            <!-- Background ambient light -->
+            <div
+                class="absolute top-1/4 right-0 w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none">
+            </div>
+
+            <div class="max-w-6xl w-full grid md:grid-cols-2 gap-20 items-center relative z-10">
+                <div class="glass-card p-10 rounded-2xl md:translate-y-12">
+                    <span class="text-xs font-bold text-blue-400 tracking-[0.2em] uppercase mb-4 block">01 /
+                        Vision</span>
+                    <h3 class="text-4xl md:text-5xl font-serif mb-8 leading-tight text-white/90">
+                        Initialising the <span class="italic text-white">Mind</span> for Infinite Possibilities.
+                    </h3>
+                    <p class="text-gray-400 leading-relaxed font-light text-lg">
+                        We don't just teach. We engineer the future. Our campus is a living organism of technology and
+                        creativity, designed to foster the next generation of innovators.
+                    </p>
+                </div>
+
+                <div class="relative pl-10">
+                    <div
+                        class="absolute -left-4 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent">
+                    </div>
+                    <div class="space-y-12">
+                        <div>
+                            <h4 class="text-2xl font-bold mb-2">Global Campus</h4>
+                            <p class="text-gray-500 font-light">Connected classrooms across 12 countries.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-bold mb-2">AI Integration</h4>
+                            <p class="text-gray-500 font-light">Personalized learning paths powered by neural networks.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-bold mb-2">Sustainable Living</h4>
+                            <p class="text-gray-500 font-light">100% renewable energy driven infrastructure.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Academics -->
+        <section id="academics" class="min-h-screen flex flex-col justify-center px-6 py-32 relative">
+            <div
+                class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent">
+            </div>
+
+            <div class="max-w-7xl w-full mx-auto">
+                <div class="text-center mb-24">
+                    <span class="text-xs font-bold text-purple-400 tracking-[0.2em] uppercase mb-4 block">02 /
+                        Curriculum</span>
+                    <h2 class="text-4xl md:text-7xl font-bold text-white tracking-tight">The <span
+                            class="font-serif italic text-white/60">New</span> Standard</h2>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Card 1 -->
+                    <div
+                        class="group glass-card p-8 rounded-xl hover:bg-white/5 transition-all duration-500 hover:-translate-y-2 cursor-default">
+                        <div
+                            class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                            <span class="text-xl">🔬</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 group-hover:text-blue-300 transition-colors">Quantum Sciences
+                        </h3>
+                        <p class="text-gray-400 text-sm font-light leading-relaxed">
+                            Exploring the very fabric of reality. From particle physics to biological engineering.
+                        </p>
+                        <div class="mt-8 h-[1px] w-full bg-white/5 group-hover:bg-blue-500/30 transition-colors"></div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div
+                        class="group glass-card p-8 rounded-xl hover:bg-white/5 transition-all duration-500 hover:-translate-y-2 cursor-default">
+                        <div
+                            class="h-12 w-12 rounded-full bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                            <span class="text-xl">🎨</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 group-hover:text-pink-300 transition-colors">Digital
+                            Renaissance</h3>
+                        <p class="text-gray-400 text-sm font-light leading-relaxed">
+                            Where code meets canvas. Generative art, 3D modeling, and immersive experiences.
+                        </p>
+                        <div class="mt-8 h-[1px] w-full bg-white/5 group-hover:bg-pink-500/30 transition-colors"></div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div
+                        class="group glass-card p-8 rounded-xl hover:bg-white/5 transition-all duration-500 hover:-translate-y-2 cursor-default">
+                        <div
+                            class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                            <span class="text-xl">🌍</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 group-hover:text-emerald-300 transition-colors">Macro
+                            Economics</h3>
+                        <p class="text-gray-400 text-sm font-light leading-relaxed">
+                            Understanding the flow of value in a decentralized, borderless digital economy.
+                        </p>
+                        <div class="mt-8 h-[1px] w-full bg-white/5 group-hover:bg-emerald-500/30 transition-colors">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact / CTA -->
+        <section id="contact"
+            class="pb-20 pt-32 px-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <!-- Background element -->
+            <div class="absolute inset-0 bg-gradient-to-t from-blue-900/10 to-transparent pointer-events-none"></div>
+
+            <div class="relative z-10 max-w-3xl">
+                <h2 class="text-5xl md:text-8xl font-serif italic mb-6">Begin Now</h2>
+                <p class="text-xl text-gray-400 font-light mb-12 max-w-lg mx-auto">
+                    The waitlist for the 2026 Academic Year is now open. Secure your place in the future.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                    <button
+                        class="bg-white text-black px-10 py-4 rounded-full font-bold tracking-wide hover:scale-105 transition-transform duration-300">
+                        APPLY FOR ADMISSION
+                    </button>
+                    <a href="#"
+                        class="text-white hover:text-gray-300 transition-colors border-b border-transparent hover:border-gray-300 pb-1">
+                        Download Brochure
+                    </a>
+                </div>
+            </div>
+
+            <footer
+                class="mt-32 w-full max-w-7xl border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 font-mono uppercase tracking-widest">
+                <div>&copy; 2026 Demo School Inc.</div>
+                <div class="flex gap-8 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-white transition-colors">Legal</a>
+                    <a href="#" class="hover:text-white transition-colors">Privacy</a>
+                    <a href="#" class="hover:text-white transition-colors">Contact</a>
+                </div>
+            </footer>
+        </section>
+    </main>
+
+    <script>
+        // Configuration
+        const frameCount = 120;
+        const currentFrame = index => `Assets/ezgif-frame-${index.toString().padStart(3, '0')}.jpg`;
+        const images = [];
+        const canvas = document.getElementById('hero-canvas');
+        const context = canvas.getContext('2d');
+        const scrollTrigger = document.getElementById('scroll-trigger');
+        const overlayText = document.getElementById('overlay-text');
+
+        // Preloader elements
+        const preloader = document.getElementById('preloader');
+        const loaderText = document.getElementById('loader-text');
+
+        let loadedCount = 0;
+
+        // Set Canvas dimensions
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Redraw current frame after resize
+            requestAnimationFrame(() => updateImage(lastFrameIndex));
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Load Images
+        const preloadHeaders = async () => {
+            for (let i = 1; i <= frameCount; i++) {
+                const img = new Image();
+                img.src = currentFrame(i);
+                img.onload = () => {
+                    loadedCount++;
+                    const percent = Math.round((loadedCount / frameCount) * 100);
+                    if (loaderText) loaderText.innerText = `LOADING ASSETS ${percent}%`;
+
+                    if (loadedCount === frameCount) {
+                        finishLoading();
+                    }
+                };
+                img.onerror = () => {
+                    console.warn(`Frame ${i} missing`); // Silent fail for UX
+                    loadedCount++;
+                    if (loadedCount === frameCount) finishLoading();
+                }
+                images.push(img);
+            }
+        };
+
+        function finishLoading() {
+            updateImage(0);
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 800);
+            }, 500);
+        }
+
+        // Draw Image to Canvas with "cover" fit
+        let lastFrameIndex = 0;
+
+        function updateImage(index) {
+            if (index >= 0 && index < images.length) {
+                const img = images[index];
+                if (!img.complete) return;
+
+                const canvasRatio = canvas.width / canvas.height;
+                const imgRatio = img.width / img.height;
+
+                let renderWidth, renderHeight, offsetX, offsetY;
+
+                if (canvasRatio > imgRatio) {
+                    renderWidth = canvas.width;
+                    renderHeight = canvas.width / imgRatio;
+                    offsetX = 0;
+                    offsetY = (canvas.height - renderHeight) / 2;
+                } else {
+                    renderWidth = canvas.height * imgRatio;
+                    renderHeight = canvas.height;
+                    offsetX = (canvas.width - renderWidth) / 2;
+                    offsetY = 0;
+                }
+
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(img, offsetX, offsetY, renderWidth, renderHeight);
+                lastFrameIndex = index;
+            }
+        }
+
+        // Scroll Handling
+        const onScroll = () => {
+            const triggerRect = scrollTrigger.getBoundingClientRect();
+            const triggerTop = triggerRect.top;
+            const triggerHeight = triggerRect.height;
+            const viewportHeight = window.innerHeight;
+
+            // Distance scrolled relative to the start of the section
+            const scrollTop = -triggerTop;
+            const maxScroll = triggerHeight - viewportHeight;
+
+            let scrollFraction = scrollTop / maxScroll;
+
+            // Clamp 0 to 1
+            if (scrollFraction < 0) scrollFraction = 0;
+            if (scrollFraction > 1) scrollFraction = 1;
+
+            // Map to frames
+            const frameIndex = Math.min(
+                frameCount - 1,
+                Math.floor(scrollFraction * frameCount)
+            );
+
+            requestAnimationFrame(() => updateImage(frameIndex));
+
+            // Parallax & Fade Effects
+            // Move text up slowly
+            const yOffset = -(scrollFraction * window.innerHeight * 0.35);
+            // Fade out text quicker
+            const opacity = Math.max(0, 1 - (scrollFraction * 2.5));
+
+            if (overlayText) {
+                overlayText.style.transform = `translate(-50%, calc(-50% + ${yOffset}px))`;
+                overlayText.style.opacity = opacity;
+                // Optional: Blur effect as it leaves
+                overlayText.style.filter = `blur(${scrollFraction * 10}px)`;
+            }
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+
+
+        // Menu Toggle Logic
+        const menuBtn = document.getElementById('menu-btn');
+        const menuOverlay = document.getElementById('menu-overlay');
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                menuOverlay.classList.add('open');
+                menuOverlay.style.pointerEvents = 'auto'; // Enable clicks
+
+                // Animate burger to 'X'
+                menuBtn.children[0].style.transform = 'rotate(-45deg) translate(-4px, 4px)';
+                menuBtn.children[0].style.width = '24px';
+                menuBtn.children[1].style.opacity = '0';
+                menuBtn.children[2].style.transform = 'rotate(45deg) translate(-4px, -4px)';
+                menuBtn.children[2].style.width = '24px';
+            } else {
+                menuOverlay.classList.remove('open');
+                menuOverlay.style.pointerEvents = 'none'; // Disable clicks
+
+                // Reset burger
+                menuBtn.children[0].style.transform = 'none';
+                menuBtn.children[1].style.opacity = '1';
+                menuBtn.children[2].style.transform = 'none';
+                // Reset widths are handled by CSS hover, but let's clear inline styles mostly
+                menuBtn.children[0].style.width = '';
+                menuBtn.children[2].style.width = '';
+            }
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+
+        // Start loading
+        preloadHeaders();
+
+    </script>
+</body>
+
+</html>
